@@ -72,7 +72,7 @@ bool E131AddressableLightEffect::process_(int universe, const E131Packet &packet
       for (; output_offset < output_end; output_offset++, input_data += 3) {
         auto output = (*it)[output_offset];
         output.set(
-            Color(input_data[0], input_data[1], input_data[2], (input_data[0] + input_data[1] + input_data[2]) / 3));
+            Color(input_data[0], input_data[1], input_data[2], 0));
       }
       break;
 
