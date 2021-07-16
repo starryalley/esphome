@@ -367,6 +367,7 @@ bool PanasonicClimate::on_receive(remote_base::RemoteReceiveData data) {
   }
 
   this->publish_state();
+  this->transmit_state();
   return true;
 }
 
