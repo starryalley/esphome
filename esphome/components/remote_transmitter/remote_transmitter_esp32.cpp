@@ -9,7 +9,7 @@ namespace remote_transmitter {
 
 static const char *const TAG = "remote_transmitter";
 
-void RemoteTransmitterComponent::setup() {}
+void RemoteTransmitterComponent::setup() { this->configure_rmt(); }
 
 void RemoteTransmitterComponent::dump_config() {
   ESP_LOGCONFIG(TAG, "Remote Transmitter...");
@@ -74,11 +74,6 @@ void RemoteTransmitterComponent::configure_rmt() {
 void RemoteTransmitterComponent::send_internal(uint32_t send_times, uint32_t send_wait) {
   if (this->is_failed())
     return;
-
-  if (this->current_carrier_frequency_ != this->temp_.get_carrier_frequency()) {
-    this->current_carrier_frequency_ = this->temp_.get_carrier_frequency();
-    this->configure_rmt();
-  }
 
   this->rmt_temp_.clear();
   this->rmt_temp_.reserve((this->temp_.get_data().size() + 1) / 2);
