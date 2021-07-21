@@ -31,6 +31,9 @@ class ESPColorCorrection {
   inline uint8_t color_correct_white(uint8_t white) const ALWAYS_INLINE {
     //uint8_t res = esp_scale8(esp_scale8(white, this->max_brightness_.white), this->local_brightness_);
     uint8_t res = esp_scale8(white, this->max_brightness_.white);
+    if (this->local_brightness_ == 0) {
+      res = 0;
+    }
     return this->gamma_table_[res];
   }
   inline Color color_uncorrect(Color color) const ALWAYS_INLINE {
