@@ -1,7 +1,7 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome import pins
-from esphome.components import remote_base
+from esphome.components import remote_base, remote_transmitter
 from esphome.const import (
     CONF_BUFFER_SIZE,
     CONF_DUMP,
@@ -19,6 +19,8 @@ remote_receiver_ns = cg.esphome_ns.namespace("remote_receiver")
 RemoteReceiverComponent = remote_receiver_ns.class_(
     "RemoteReceiverComponent", remote_base.RemoteReceiverBase, cg.Component
 )
+
+CONF_TRANSMITTER_ID_TO_FORWARD = "forward_to"
 
 MULTI_CONF = True
 CONFIG_SCHEMA = remote_base.validate_triggers(
@@ -42,6 +44,10 @@ CONFIG_SCHEMA = remote_base.validate_triggers(
                 CONF_IDLE, default="10ms"
             ): cv.positive_time_period_microseconds,
             cv.Optional(CONF_MEMORY_BLOCKS, default=3): cv.Range(min=1, max=8),
+            # cv.GenerateID(remote_base.CONF_TRANSMITTER_ID): cv.use_id(
+            cv.Optional(CONF_TRANSMITTER_ID_TO_FORWARD): cv.use_id(
+                remote_transmitter.RemoteTransmitterComponent
+            ),
         }
     ).extend(cv.COMPONENT_SCHEMA)
 )
@@ -65,3 +71,7 @@ async def to_code(config):
     cg.add(var.set_buffer_size(config[CONF_BUFFER_SIZE]))
     cg.add(var.set_filter_us(config[CONF_FILTER]))
     cg.add(var.set_idle_us(config[CONF_IDLE]))
+
+    if CONF_TRANSMITTER_ID_TO_FORWARD in config:
+        transmitter = await cg.get_variable(config[CONF_TRANSMITTER_ID_TO_FORWARD])
+        cg.add(var.set_transmitter(transmitter))

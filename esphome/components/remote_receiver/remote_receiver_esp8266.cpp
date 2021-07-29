@@ -112,6 +112,13 @@ void RemoteReceiverComponent::loop() {
   this->temp_.push_back(this->idle_us_ * multiplier);
 
   this->call_listeners_dumpers_();
+
+  if (this->transmitter_ != nullptr) {
+    auto transmit = this->transmitter_->transmit();
+    auto data = transmit.get_data();
+    data->set_data(this->temp_);
+    transmit.perform();
+  }
 }
 
 }  // namespace remote_receiver
