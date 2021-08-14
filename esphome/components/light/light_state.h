@@ -8,6 +8,7 @@
 #include "light_call.h"
 #include "light_traits.h"
 #include "light_transformer.h"
+#include "esphome/core/color.h"
 
 namespace esphome {
 namespace light {
@@ -68,6 +69,10 @@ class LightState : public Nameable, public Component {
    */
   LightColorValues remote_values;
 
+  LightColorValues last_values_;
+
+  Color effect_color;
+
   /// Publish the currently active state to the frontend.
   void publish_state();
 
@@ -92,6 +97,8 @@ class LightState : public Nameable, public Component {
    * @param send_callback
    */
   void add_new_target_state_reached_callback(std::function<void()> &&send_callback);
+
+  void add_new_state_change_callback(std::function<void()> &&send_callback);
 
 #ifdef USE_JSON
   /// Dump the state of this light as JSON.
@@ -183,6 +190,8 @@ class LightState : public Nameable, public Component {
    * This should be called once the state of current_values changed and equals the state of remote_values
    */
   CallbackManager<void()> target_state_reached_callback_{};
+
+  CallbackManager<void()> state_change_callback_{};
 
   /// Default transition length for all transitions in ms.
   uint32_t default_transition_length_{};

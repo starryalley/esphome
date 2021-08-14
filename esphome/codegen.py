@@ -77,5 +77,6 @@ from esphome.cpp_types import (  # noqa
     JsonObjectRef,
     JsonObjectConstRef,
     Controller,
+    Color,
     GPIOPin,
 )

@@ -37,6 +37,7 @@ from .types import (  # noqa
     AddressableLight,
     LightTurnOnTrigger,
     LightTurnOffTrigger,
+    LightChangeStateTrigger,
 )
 
 CODEOWNERS = ["@esphome/core"]
@@ -51,6 +52,8 @@ RESTORE_MODES = {
     "RESTORE_INVERTED_DEFAULT_OFF": LightRestoreMode.LIGHT_RESTORE_INVERTED_DEFAULT_OFF,
     "RESTORE_INVERTED_DEFAULT_ON": LightRestoreMode.LIGHT_RESTORE_INVERTED_DEFAULT_ON,
 }
+
+CONF_ON_STATE_CHANGE = "on_state_change"
 
 LIGHT_SCHEMA = cv.MQTT_COMMAND_COMPONENT_SCHEMA.extend(
     {
@@ -67,6 +70,11 @@ LIGHT_SCHEMA = cv.MQTT_COMMAND_COMPONENT_SCHEMA.extend(
         cv.Optional(CONF_ON_TURN_OFF): auto.validate_automation(
             {
                 cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(LightTurnOffTrigger),
+            }
+        ),
+        cv.Optional(CONF_ON_STATE_CHANGE): auto.validate_automation(
+            {
+                cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(LightChangeStateTrigger),
             }
         ),
     }
@@ -141,6 +149,11 @@ async def setup_light_core_(light_var, output_var, config):
     for conf in config.get(CONF_ON_TURN_OFF, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], light_var)
         await auto.build_automation(trigger, [], conf)
+    for conf in config.get(CONF_ON_STATE_CHANGE, []):
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], light_var)
+        # await auto.build_automation(trigger, [(float, "test")], conf)
+        await auto.build_automation(trigger, [(cg.Color, "test")], conf)
+        #(cg.std_vector.template(cg.uint8), "x")
 
     if CONF_COLOR_CORRECT in config:
         cg.add(output_var.set_correction(*config[CONF_COLOR_CORRECT]))

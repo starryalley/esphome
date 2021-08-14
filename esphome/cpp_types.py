@@ -30,5 +30,6 @@ JsonObject = arduino_json_ns.class_("JsonObject")
 JsonObjectRef = JsonObject.operator("ref")
 JsonObjectConstRef = JsonObjectRef.operator("const")
 Controller = esphome_ns.class_("Controller")
+Color = esphome_ns.class_("Color")
 
 GPIOPin = esphome_ns.class_("GPIOPin")

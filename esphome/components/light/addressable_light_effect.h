@@ -87,6 +87,7 @@ class AddressableRainbowLightEffect : public AddressableLightEffect {
       var = hsv;
       hue += add;
     }
+    this->firstPixel = it[0].get();
   }
   void set_speed(uint32_t speed) { this->speed_ = speed; }
   void set_width(uint16_t width) { this->width_ = width; }

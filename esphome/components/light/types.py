@@ -28,6 +28,9 @@ LightTurnOnTrigger = light_ns.class_(
 LightTurnOffTrigger = light_ns.class_(
     "LightTurnOffTrigger", automation.Trigger.template()
 )
+LightChangeStateTrigger = light_ns.class_(
+    "LightChangeStateTrigger", automation.Trigger.template()
+)
 
 # Effects
 LightEffect = light_ns.class_("LightEffect")

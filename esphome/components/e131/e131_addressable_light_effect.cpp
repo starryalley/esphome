@@ -83,6 +83,7 @@ bool E131AddressableLightEffect::process_(int universe, const E131Packet &packet
       }
       break;
   }
+  this->firstPixel = it[0].get(0).get();
 
   return true;
 }

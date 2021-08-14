@@ -5,6 +5,7 @@
 #include "esphome/core/component.h"
 #include "light_color_values.h"
 #include "light_state.h"
+#include "esphome/core/color.h"
 
 namespace esphome {
 namespace light {
@@ -35,6 +36,7 @@ class LightEffect {
     this->state_ = state;
     this->init();
   }
+  Color firstPixel;
 
  protected:
   LightState *state_{nullptr};

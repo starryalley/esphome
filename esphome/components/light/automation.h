@@ -135,6 +135,16 @@ class LightTurnOffTrigger : public Trigger<> {
   }
 };
 
+class LightChangeStateTrigger : public Trigger<Color> {
+ public:
+  LightChangeStateTrigger(LightState *a_light) {
+    a_light->add_new_state_change_callback([this, a_light]() {
+      auto colour = a_light->effect_color;
+      this->trigger(colour);
+    });
+  }
+};
+
 template<typename... Ts> class AddressableSet : public Action<Ts...> {
  public:
   explicit AddressableSet(LightState *parent) : parent_(parent) {}

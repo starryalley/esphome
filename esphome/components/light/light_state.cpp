@@ -95,6 +95,10 @@ void LightState::loop() {
   auto *effect = this->get_active_effect_();
   if (effect != nullptr) {
     effect->apply();
+    this->effect_color = effect->firstPixel;
+    ESP_LOGD(TAG, "                                         red: %d, blue: %d, green: %d,", effect->firstPixel.r, effect->firstPixel.g, effect->firstPixel.b);
+    this->state_change_callback_.call();
+    // ESP_LOGD(TAG, "  red: %d, blue: %d, green: %d,", this->effect_color.r, this->effect_color.g, this->effect_color.b);
   }
 
   // Apply transformer (if any)
@@ -111,9 +115,21 @@ void LightState::loop() {
     }
     this->next_write_ = true;
   }
+  // if (this->current_values != this->last_values_) {
+  //   float colBrightness = this->current_values.get_color_brightness();
+  //   this->effect_color.red = static_cast<uint8_t>(this->current_values.get_red() * 255 * colBrightness);
+  //   this->effect_color.green = static_cast<uint8_t>(this->current_values.get_green() * 255 * colBrightness);
+  //   this->effect_color.blue = static_cast<uint8_t>(this->current_values.get_red() * 255 * colBrightness);
+
+  //   ESP_LOGD(TAG, "                                         red: %d, green: %d, blue: %d,", this->effect_color.red, this->effect_color.green, this->effect_color.blue);
+
+  //   this->state_change_callback_.call();
+  //   this->last_values_ = this->current_values;
+  // }
 
   if (this->next_write_) {
     this->output_->write_state(this);
+    // this->state_change_callback_.call();
     this->next_write_ = false;
   }
 }
@@ -139,6 +155,9 @@ void LightState::add_new_remote_values_callback(std::function<void()> &&send_cal
 }
 void LightState::add_new_target_state_reached_callback(std::function<void()> &&send_callback) {
   this->target_state_reached_callback_.add(std::move(send_callback));
+}
+void LightState::add_new_state_change_callback(std::function<void()> &&send_callback) {
+  this->state_change_callback_.add(std::move(send_callback));
 }
 
 #ifdef USE_JSON
