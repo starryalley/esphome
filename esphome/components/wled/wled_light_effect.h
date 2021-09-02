@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <memory>
+#include "FX.h"
 
 class UDP;
 
@@ -29,6 +30,8 @@ class WLEDLightEffect : public light::AddressableLightEffect {
   bool parse_drgb_frame_(light::AddressableLight &it, const uint8_t *payload, uint16_t size);
   bool parse_drgbw_frame_(light::AddressableLight &it, const uint8_t *payload, uint16_t size);
   bool parse_dnrgb_frame_(light::AddressableLight &it, const uint8_t *payload, uint16_t size);
+
+  uint16_t mode_halloween_eyes(void);
 
  protected:
   uint16_t port_{0};

@@ -88,12 +88,19 @@ bool WLEDLightEffect::parse_frame_(light::AddressableLight &it, const uint8_t *p
   uint8_t protocol = payload[0];
   uint8_t timeout = payload[1];
 
+  ESP_LOGD(TAG, "parse_frame_: protocol=%d, timeout=%d, size=%zu.", payload[0], payload[1], size);
+  ESP_LOGD(TAG, "parse_frame_ payload: %s", hexencode(payload, size).c_str());
+
   payload += 2;
   size -= 2;
+
+  ESP_LOGD(TAG, "parse_frame_: protocol=%d, timeout=%d, size=%zu.", payload[0], payload[1], size);
+  ESP_LOGD(TAG, "parse_frame_ payload: %s", hexencode(payload, size).c_str());
 
   switch (protocol) {
     case WLED_NOTIFIER:
       // Hyperion Port
+      ESP_LOGD(TAG, "parse_frame_ WLED_NOTIFIER: port_=%d).", port_);
       if (port_ == 19446) {
         if (!parse_drgb_frame_(it, payload, size))
           return false;
