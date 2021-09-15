@@ -7,6 +7,7 @@
 #include "esphome/components/fosmlt/game/fosmlt_game.h"
 #include "esphome/components/fosmlt/magazine/fosmlt_magazine.h"
 #include "esphome/components/sensor/sensor.h"
+#include "esphome/components/fosmlt/tagger/firemode_selector.h"
 
 
 namespace esphome {
@@ -18,15 +19,15 @@ enum ReloadType {
   PHYSICAL_RELOAD = 2,
 };
 
-enum FiringType {
-  SAFETY = 0,
-  SEMI_AUTOMATIC = 1,
-  BURST_FIRE = 2,
-  FULL_AUTOMATIC = 3,
-  RAMPING_FIRERATE = 4,  // automatic with decreasing time between shots
-  CHARGING_FIRE = 5,  // fire and release below a certain time = standard shot, else charge to a maximum amount over a
-                      // set time, fires on trigger release
-};
+// enum FiringType {
+//   SAFETY = 0,
+//   SEMI_AUTOMATIC = 1,
+//   BURST_FIRE = 2,
+//   FULL_AUTOMATIC = 3,
+//   RAMPING_FIRERATE = 4,  // automatic with decreasing time between shots
+//   CHARGING_FIRE = 5,  // fire and release below a certain time = standard shot, else charge to a maximum amount over a
+//                       // set time, fires on trigger release
+// };
 
 enum CantFireReason {
   CAN_FIRE = 0,
