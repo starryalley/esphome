@@ -108,7 +108,8 @@ void FeedbackFan::setup() {
 
 void FeedbackFan::loop() {
   int32_t dir = this->target_position - this->current_position;
-  if (dir == 0) {
+  //within threshold
+  if ((dir <= this->positional_threshold_ ) && (dir >= - this->positional_threshold_)) {
     if (this->fan_feedback_state_ == FAN_MOVING || this->fan_feedback_state_ == FAN_ACCELERATING ||
         this->fan_feedback_state_ == FAN_DECELERATING) {
       this->fan_feedback_state_ = FAN_STOPPED;

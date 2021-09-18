@@ -19,10 +19,11 @@ enum FeedbackFanState { FAN_STOPPED = 0, FAN_MOVING = 1, FAN_ACCELERATING = 2, F
 
 class FeedbackFan : public stepper::Stepper, public Component {
  public:
-  void set_hbridge_fan(hbridge::HBridgeFan *hbridge_fan_output) { hbridge_fan_output_ = hbridge_fan_output; }
+  void set_hbridge_fan(hbridge::HBridgeFan *hbridge_fan_output) { this->hbridge_fan_output_ = hbridge_fan_output; }
   void set_sensor(sensor::Sensor *sensor) { this->sensor_ = sensor; };
-  void set_initial_output(int initial_output) { initial_output_ = initial_output; }
-  void set_min_output(int min_output) { min_output_ = min_output; }
+  void set_initial_output(int initial_output) { this->initial_output_ = initial_output; }
+  void set_min_output(int min_output) { this->min_output_ = min_output; }
+  void set_positional_threshold(int positional_threshold) { this->positional_threshold_ = positional_threshold; }
 
   void setup() override;
   void dump_config() override;
@@ -41,6 +42,7 @@ class FeedbackFan : public stepper::Stepper, public Component {
   int32_t starting_position_;
   int32_t last_step_interval_;
   float target_step_;
+  int16_t positional_threshold_;
 
   void turn_on_fan_(int32_t dir);
 

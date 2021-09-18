@@ -20,6 +20,7 @@ CONF_FAN_ID = "fan_id"
 CONF_HBRIDGE_ID = "hbridge_fan_id"
 CONF_INITIAL_OUTPUT = "initial_output"
 CONF_MIN_OUTPUT = "min_output"
+CONF_POSITIONAL_THRESHOLD = "positional_threshold"
 
 CONFIG_SCHEMA = stepper.STEPPER_SCHEMA.extend(
     {
@@ -30,6 +31,7 @@ CONFIG_SCHEMA = stepper.STEPPER_SCHEMA.extend(
             min=1
         ),  # fix to grab speedcount
         cv.Optional(CONF_MIN_OUTPUT, default=0): cv.int_range(min=0),
+        cv.Optional(CONF_POSITIONAL_THRESHOLD, default=0): cv.int_range(min=0),
     }
 ).extend(cv.COMPONENT_SCHEMA)
 
@@ -80,3 +82,5 @@ async def to_code(config):
         cg.add(var.set_initial_output(config[CONF_INITIAL_OUTPUT]))
     if CONF_MIN_OUTPUT in config:
         cg.add(var.set_min_output(config[CONF_MIN_OUTPUT]))
+    if CONF_POSITIONAL_THRESHOLD in config:
+        cg.add(var.set_positional_threshold(config[CONF_POSITIONAL_THRESHOLD]))
