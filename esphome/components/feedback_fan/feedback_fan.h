@@ -44,11 +44,13 @@ class FeedbackFan : public stepper::Stepper, public Component {
   float target_step_;
   int16_t positional_threshold_;
 
+  int32_t last_position_{0};
+
   void turn_on_fan_(int32_t dir);
 
   // if called externally with now(micros()), it will give a faulty speed
   // only meant to be called when feedback is received
-  void calculate_speed_(uint32_t now);
+  void calculate_speed_(uint32_t now, uint16_t steps_travelled);
   void calculate_target_step_(float initial_velocity, uint32_t now, float accel);
 
   // speed::SpeedFan *speed_fan_output_{nullptr};

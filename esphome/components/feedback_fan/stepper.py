@@ -55,19 +55,6 @@ async def feedback_fan_set_initial_output_to_code(
     cg.add(paren.set_initial_output(template_))
     return var
 
-
-# @automation.register_action(
-#     "stepper.feedback_fan.set_home",
-#     SetInitialOutputAction,
-#     cv.Schema(
-#         {
-#             cv.Required(CONF_ID): cv.use_id(FeedbackFan),
-#             cv.Required(CONF_INITIAL_OUTPUT): cv.templatable(cv.int_),
-#         }
-#     ),
-# )
-
-
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)

@@ -15,10 +15,11 @@ void FeedbackFan::dump_config() {
   LOG_STEPPER(this);
 }
 
-void FeedbackFan::calculate_speed_(uint32_t now) {
+void FeedbackFan::calculate_speed_(uint32_t now, uint16_t steps_travelled) {
   this->last_calculation_ = now;
-  this->current_speed_ = 1e+6f / this->last_step_interval_;
+  this->current_speed_ = steps_travelled * (1e+6f / this->last_step_interval_);
   ESP_LOGD(TAG, "current_speed: %f steps/s", this->current_speed_);
+  this->last_position_ = this->current_position;
 }
 
 void FeedbackFan::calculate_target_step_(float initial_velocity, uint32_t now, float accel) {
@@ -52,10 +53,11 @@ void FeedbackFan::setup() {
 
     uint32_t now = micros();
     this->last_step_interval_ = (now - this->last_calculation_);
-    this->calculate_speed_(now);
+    uint16_t steps_travelled = abs(this->current_position - this->last_position_);
+    this->calculate_speed_(now,steps_travelled);
 
     // check if it's time to start decelerating
-    if (this->fan_feedback_state_ != FAN_DECELERATING) {
+    if (this->fan_feedback_state_ != FAN_DECELERATING && this->deceleration_ != 1e6f) {
       int32_t steps_until_end = abs(int32_t(this->target_position) - int32_t(this->current_position));
       if (steps_until_end < this->steps_to_decelerate_) {
         this->fan_feedback_state_ = FAN_DECELERATING;
@@ -63,19 +65,18 @@ void FeedbackFan::setup() {
       }
     }
 
-    if (this->fan_feedback_state_ == FAN_DECELERATING) {
+    if (this->fan_feedback_state_ == FAN_DECELERATING  && this->deceleration_ != 1e6f) {
       int32_t steps_until_end = abs(int32_t(this->target_position) - int32_t(this->current_position));
       this->calculate_target_step_(this->max_speed_, now, -this->deceleration_);
 
-      // ESP_LOGD(TAG, "Decelerating: target_steps: %f, steps: %d", this->target_step_, (this->steps_to_decelerate_ -
-      // steps_until_end));
-      int increment = (this->target_step_ > (this->steps_to_decelerate_ - steps_until_end)) ? 1 : -1;
+      int increment = (this->target_step_ < (this->steps_to_decelerate_ - steps_until_end)) ? 1 : -1;
       int new_speed = this->hbridge_fan_output_->speed + increment;
+      ESP_LOGD(TAG, "Decelerating: target_steps: %f, steps: %d, increment: %d, new_speed: %d", this->target_step_, (this->steps_to_decelerate_ - steps_until_end), increment, new_speed);
       this->hbridge_fan_output_->speed =
-          clamp(new_speed, this->min_output_, this->hbridge_fan_output_->get_speed_count());
+          clamp(new_speed, this->min_output_, this->hbridge_fan_output_->get_traits().supported_speed_count());
       this->hbridge_fan_output_->internal_update();
 
-    } else if (this->fan_feedback_state_ == FAN_ACCELERATING) {
+    } else if (this->fan_feedback_state_ == FAN_ACCELERATING  && this->acceleration_ != 1e6f) {
       // reached constant speed, stop accelerating
       if (this->current_speed_ >= this->max_speed_) {
         this->fan_feedback_state_ = FAN_MOVING;
@@ -86,20 +87,26 @@ void FeedbackFan::setup() {
 
         // ESP_LOGD(TAG, "Accelerating: target_steps: %f, steps: %d", this->target_step_, steps_since_start);
         if (steps_since_start != this->target_step_) {
-          int increment = (this->target_step_ > steps_since_start) ? 1 : -1;
+          int increment = (this->target_step_ < steps_since_start) ? 1 : -1;
           int new_speed = this->hbridge_fan_output_->speed + increment;
+          ESP_LOGD(TAG, "Accelerating: target_steps: %f, steps: %d, increment: %d, new_speed: %d", this->target_step_, steps_since_start, increment, new_speed);
           this->hbridge_fan_output_->speed =
-              clamp(new_speed, this->min_output_, this->hbridge_fan_output_->get_speed_count());
+              clamp(new_speed, this->min_output_, this->hbridge_fan_output_->get_traits().supported_speed_count());
           this->hbridge_fan_output_->internal_update();
         }
       }
     } else if (this->fan_feedback_state_ == FAN_MOVING) {
+      if (this->target_speed_ != this->max_speed_) {
+        this->target_speed_ = this->max_speed_;
+      }
       // reached max speed, so track constant speed, using a simpler speed based comparison
       if (this->current_speed_ != this->target_speed_) {
         int increment = (this->current_speed_ < this->target_speed_) ? 1 : -1;
+        // (this->current_speed_ < this->target_speed_) ? ESP_LOGD(TAG,"%f < %f",this->current_speed_ ,this->target_speed_) : ESP_LOGD(TAG,"%f > %f",this->current_speed_ ,this->target_speed_);
         int new_speed = this->hbridge_fan_output_->speed + increment;
+        // ESP_LOGD(TAG, "FAN_MOVING: target_steps: %f, increment: %d, new_speed: %d", this->target_step_, increment, new_speed);
         this->hbridge_fan_output_->speed =
-            clamp(new_speed, this->min_output_, this->hbridge_fan_output_->get_speed_count());
+            clamp(new_speed, this->min_output_, this->hbridge_fan_output_->get_traits().supported_speed_count());
         this->hbridge_fan_output_->internal_update();
       }
     }
@@ -108,6 +115,25 @@ void FeedbackFan::setup() {
 
 void FeedbackFan::loop() {
   int32_t dir = this->target_position - this->current_position;
+
+  // switch(this->fan_feedback_state_) {
+  //   case FAN_MOVING:
+  //     ESP_LOGD(TAG, "FAN_MOVING, dir: %d, within_threshold: %d",dir,((dir <= this->positional_threshold_ ) && (dir >= - this->positional_threshold_)));
+  //     break;
+  //   case FAN_ACCELERATING:
+  //     ESP_LOGD(TAG, "FAN_ACCELERATING, dir: %d, within_threshold: %d",dir,((dir <= this->positional_threshold_ ) && (dir >= - this->positional_threshold_)));
+  //     break;
+  //   case FAN_DECELERATING:
+  //     ESP_LOGD(TAG, "FAN_DECELERATING, dir: %d, within_threshold: %d",dir,((dir <= this->positional_threshold_ ) && (dir >= - this->positional_threshold_)));
+  //     break;
+  //   case FAN_STOPPED:
+  //     ESP_LOGD(TAG, "FAN_STOPPED, dir: %d, within_threshold: %d",dir,((dir <= this->positional_threshold_ ) && (dir >= - this->positional_threshold_)));
+  //     break;
+  //   //default:
+  //     // code block
+  // }
+
+
   //within threshold
   if ((dir <= this->positional_threshold_ ) && (dir >= - this->positional_threshold_)) {
     if (this->fan_feedback_state_ == FAN_MOVING || this->fan_feedback_state_ == FAN_ACCELERATING ||
@@ -121,7 +147,7 @@ void FeedbackFan::loop() {
   }
 
   if (this->fan_feedback_state_ == FAN_STOPPED) {
-    this->fan_feedback_state_ = FAN_ACCELERATING;
+    this->fan_feedback_state_ = (this->acceleration_ != 1e6f) ? FAN_ACCELERATING : FAN_MOVING;
     ESP_LOGD(TAG, "FAN_STOPPED -> FAN_MOVING");
     this->turn_on_fan_(dir);
     return;
