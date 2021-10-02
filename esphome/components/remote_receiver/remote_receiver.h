@@ -2,6 +2,7 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/remote_base/remote_base.h"
+#include "esphome/components/remote_transmitter/remote_transmitter.h"
 
 namespace esphome {
 namespace remote_receiver {
@@ -47,6 +48,9 @@ class RemoteReceiverComponent : public remote_base::RemoteReceiverBase,
   void set_buffer_size(uint32_t buffer_size) { this->buffer_size_ = buffer_size; }
   void set_filter_us(uint8_t filter_us) { this->filter_us_ = filter_us; }
   void set_idle_us(uint32_t idle_us) { this->idle_us_ = idle_us; }
+  void set_transmitter(remote_transmitter::RemoteTransmitterComponent *transmitter) {
+    this->transmitter_ = transmitter;
+  }
 
  protected:
 #ifdef USE_ESP32
@@ -63,6 +67,7 @@ class RemoteReceiverComponent : public remote_base::RemoteReceiverBase,
   uint32_t buffer_size_{};
   uint8_t filter_us_{10};
   uint32_t idle_us_{10000};
+  remote_transmitter::RemoteTransmitterComponent *transmitter_{nullptr};
 };
 
 }  // namespace remote_receiver

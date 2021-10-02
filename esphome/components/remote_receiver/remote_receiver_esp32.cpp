@@ -151,6 +151,13 @@ void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t len) {
       this->temp_.push_back(-int32_t(this->to_microseconds_(prev_length)) * multiplier);
     }
   }
+
+  if (this->transmitter_ != nullptr) {
+    auto transmit = this->transmitter_->transmit();
+    auto data = transmit.get_data();
+    data->set_data(this->temp_);
+    transmit.perform();
+  }
 }
 
 }  // namespace remote_receiver
