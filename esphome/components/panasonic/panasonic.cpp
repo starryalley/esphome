@@ -30,7 +30,7 @@ const uint8_t PANASONIC_FAN_MEDIUM = 0x50;
 const uint8_t PANASONIC_FAN_HIGH = 0x70;
 
 // fan swing
-//(message[8] & B00001111)
+//(message[8] & 15)
 // vertical
 // Auto = 0x0F
 // 1 = towards sky, 5 = lowest vains (towards floor)
@@ -106,7 +106,7 @@ void PanasonicClimate::transmit_state() {
     temperature = 30;
   }
   message[6] = (temperature - 16) << 1;
-  message[6] = message[6] | B00100000;
+  message[6] = message[6] | 32;
   // bits used for the temp are [4:1]
 
   // https://developers.home-assistant.io/docs/core/entity/climate/#fan-modes
@@ -283,7 +283,7 @@ bool PanasonicClimate::on_receive(remote_base::RemoteReceiveData data) {
   }
 
   // Byte 5 - Command mode
-  if ((message[4] & B11110000) == 0x80) {
+  if ((message[4] & 240) == 0x80) {
     // This is a non-standard command, not yet supported
     // Econavi, powerful, quiet, nanoe-g, auto comfort
     ESP_LOGD(TAG, "Unsupported command received: %s", hexencode(message, MESSAGE_LENGTH).c_str());
@@ -304,7 +304,7 @@ bool PanasonicClimate::on_receive(remote_base::RemoteReceiveData data) {
   /* Decode Message*/
 
   // Byte 6 - Mode
-  switch (message[5] & B11110000) {
+  switch (message[5] & 240) {
     case PANASONIC_MODE_HEAT:
       this->mode = climate::CLIMATE_MODE_HEAT;
       break;
@@ -327,15 +327,15 @@ bool PanasonicClimate::on_receive(remote_base::RemoteReceiveData data) {
   }
 
   // Byte 6 - On / Off
-  if ((message[5] & B00001111) == PANASONIC_OFF) {
+  if ((message[5] & 15) == PANASONIC_OFF) {
     this->mode = climate::CLIMATE_MODE_OFF;
   }
 
   /* Get the target temperature */
-  this->target_temperature = ((message[6] >> 1) & B00001111) + 16;
+  this->target_temperature = ((message[6] >> 1) & 15) + 16;
 
   /* Fan Mode */
-  switch (message[8] & B11110000) {
+  switch (message[8] & 240) {
     case PANASONIC_FAN_LOW:
       this->fan_mode = climate::CLIMATE_FAN_LOW;
       break;
@@ -352,9 +352,9 @@ bool PanasonicClimate::on_receive(remote_base::RemoteReceiveData data) {
 
   /* Swing Mode */
   const bool vertical_auto = this->get_traits().supports_swing_mode(climate::CLIMATE_SWING_VERTICAL) &&
-                             (message[8] & B00001111) == PANASONIC_SWING_V_AUTO;
+                             (message[8] & 15) == PANASONIC_SWING_V_AUTO;
   const bool horizontal_auto = this->get_traits().supports_swing_mode(climate::CLIMATE_SWING_HORIZONTAL) &&
-                               ((message[9] & B00001111) == PANASONIC_SWING_H_AUTO);
+                               ((message[9] & 15) == PANASONIC_SWING_H_AUTO);
 
   if (vertical_auto && horizontal_auto) {
     this->swing_mode = climate::CLIMATE_SWING_BOTH;
