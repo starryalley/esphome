@@ -7,7 +7,6 @@
 
 #ifdef USE_ESP32
 
-
 #include <esp_gattc_api.h>
 
 namespace esphome {
@@ -15,10 +14,14 @@ namespace powerpal_ble {
 
 namespace espbt = esphome::esp32_ble_tracker;
 
-static const espbt::ESPBTUUID POWERPAL_SERVICE_UUID = espbt::ESPBTUUID::from_raw("59DAABCD-12F4-25A6-7D4F-55961DCE4205");
-static const espbt::ESPBTUUID POWERPAL_CHARACTERISTIC_PAIRING_CODE_UUID = espbt::ESPBTUUID::from_raw("59DA0011-12F4-25A6-7D4F-55961DCE4205"); // indicate, notify, read, write
-static const espbt::ESPBTUUID POWERPAL_CHARACTERISTIC_READING_BATCH_SIZE_UUID = espbt::ESPBTUUID::from_raw("59DA0013-12F4-25A6-7D4F-55961DCE4205"); // indicate, notify, read, write
-static const espbt::ESPBTUUID POWERPAL_CHARACTERISTIC_MEASUREMENT_UUID = espbt::ESPBTUUID::from_raw("59DA0001-12F4-25A6-7D4F-55961DCE4205");  // notify, read, write
+static const espbt::ESPBTUUID POWERPAL_SERVICE_UUID =
+    espbt::ESPBTUUID::from_raw("59DAABCD-12F4-25A6-7D4F-55961DCE4205");
+static const espbt::ESPBTUUID POWERPAL_CHARACTERISTIC_PAIRING_CODE_UUID =
+    espbt::ESPBTUUID::from_raw("59DA0011-12F4-25A6-7D4F-55961DCE4205");  // indicate, notify, read, write
+static const espbt::ESPBTUUID POWERPAL_CHARACTERISTIC_READING_BATCH_SIZE_UUID =
+    espbt::ESPBTUUID::from_raw("59DA0013-12F4-25A6-7D4F-55961DCE4205");  // indicate, notify, read, write
+static const espbt::ESPBTUUID POWERPAL_CHARACTERISTIC_MEASUREMENT_UUID =
+    espbt::ESPBTUUID::from_raw("59DA0001-12F4-25A6-7D4F-55961DCE4205");  // notify, read, write
 
 static const espbt::ESPBTUUID POWERPAL_BATTERY_SERVICE_UUID = espbt::ESPBTUUID::from_uint16(0x180F);
 static const espbt::ESPBTUUID POWERPAL_BATTERY_CHARACTERISTIC_UUID = espbt::ESPBTUUID::from_uint16(0x2A19);
@@ -36,7 +39,7 @@ static const espbt::ESPBTUUID POWERPAL_BATTERY_CHARACTERISTIC_UUID = espbt::ESPB
 // readingBatchSize: '59DA0013-12F4-25A6-7D4F-55961DCE4205',
 
 class Powerpal : public esphome::ble_client::BLEClientNode, public Component {
-// class Powerpal : public esphome::ble_client::BLEClientNode, public PollingComponent {
+  // class Powerpal : public esphome::ble_client::BLEClientNode, public PollingComponent {
  public:
   void setup() override;
   void gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if,
@@ -48,12 +51,12 @@ class Powerpal : public esphome::ble_client::BLEClientNode, public Component {
   void set_power_sensor(sensor::Sensor *power_sensor) { power_sensor_ = power_sensor; }
   void set_energy_sensor(sensor::Sensor *energy_sensor) { energy_sensor_ = energy_sensor; }
   void set_pulses_per_kwh(float pulses_per_kwh) { pulses_per_kwh_ = pulses_per_kwh; }
-  void set_pairing_code(uint32_t pairing_code) { 
-                                                  pairing_code_[0] = (pairing_code & 0x000000FF);
-                                                  pairing_code_[1] = (pairing_code & 0x0000FF00) >> 8;
-                                                  pairing_code_[2] = (pairing_code & 0x00FF0000) >> 16;
-                                                  pairing_code_[3] = (pairing_code & 0xFF000000) >> 24;
-                                                }
+  void set_pairing_code(uint32_t pairing_code) {
+    pairing_code_[0] = (pairing_code & 0x000000FF);
+    pairing_code_[1] = (pairing_code & 0x0000FF00) >> 8;
+    pairing_code_[2] = (pairing_code & 0x00FF0000) >> 16;
+    pairing_code_[3] = (pairing_code & 0xFF000000) >> 24;
+  }
   void set_notification_interval(uint8_t reading_batch_size) { reading_batch_size_[0] = reading_batch_size; }
 
  protected:
@@ -67,9 +70,9 @@ class Powerpal : public esphome::ble_client::BLEClientNode, public Component {
   sensor::Sensor *battery_{nullptr};
   sensor::Sensor *power_sensor_{nullptr};
   sensor::Sensor *energy_sensor_{nullptr};
-  
+
   uint8_t pairing_code_[4];
-  uint8_t reading_batch_size_[4] = {0x01,0x00,0x00,0x00};
+  uint8_t reading_batch_size_[4] = {0x01, 0x00, 0x00, 0x00};
   float pulses_per_kwh_;
   uint64_t total_pulses_{0};
 
