@@ -13,6 +13,7 @@ from esphome.const import (
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL_INCREASING,
     UNIT_KILOWATT_HOURS,
+    UNIT_WATT,
     UNIT_PERCENT,
 )
 
@@ -23,7 +24,7 @@ Powerpal = powerpal_ble_ns.class_("Powerpal", ble_client.BLEClientNode, cg.Compo
 
 CONF_PAIRING_CODE = "pairing_code"
 CONF_NOTIFICATION_INTERVAL = "notification_interval"
-CONF_PULSES_PER_KWH = "pulses_per_kWh"
+CONF_PULSES_PER_KWH = "pulses_per_kwh"
 
 CONFIG_SCHEMA = (
     cv.Schema(
@@ -38,7 +39,8 @@ CONFIG_SCHEMA = (
             #     state_class=STATE_CLASS_MEASUREMENT,
             # ),
             cv.Optional(CONF_POWER): sensor.sensor_schema(
-                unit_of_measurement=UNIT_KILOWATT_HOURS, #used within notification_interval
+                # unit_of_measurement=UNIT_KILOWATT_HOURS, #used within notification_interval
+                unit_of_measurement=UNIT_WATT,
                 accuracy_decimals=5,
                 device_class=DEVICE_CLASS_POWER,
                 state_class=STATE_CLASS_MEASUREMENT,

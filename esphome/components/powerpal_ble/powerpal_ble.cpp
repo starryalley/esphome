@@ -16,7 +16,10 @@ void Powerpal::dump_config() {
   LOG_SENSOR(" ", "Energy", this->energy_sensor_);
 }
 
-void Powerpal::setup() { this->authenticated_ = false; }
+void Powerpal::setup() {
+  this->authenticated_ = false;
+  this->pulse_multiplier_ = ((60.0 * this->reading_batch_size_[0]) / (this->pulses_per_kwh / 1000));
+}
 
 std::string Powerpal::pkt_to_hex_(const uint8_t *data, uint16_t len) {
   char buf[64];
@@ -49,13 +52,14 @@ void Powerpal::parse_measurement_(const uint8_t *data, uint16_t length) {
     uint16_t pulses_within_interval = data[4];
     pulses_within_interval += data[5] << 8;
 
-    float total_kwh_within_interval = pulses_within_interval / this->pulses_per_kwh_;
+    // float total_kwh_within_interval = pulses_within_interval / this->pulses_per_kwh_;
+    float avg_watts_within_interval = pulses_within_interval * this->pulse_multiplier_;
 
-    ESP_LOGI("powerpal_ble", "Timestamp: %d, Pulses: %d, Energy Used: %f kWh", unix_time, pulses_within_interval,
-             total_kwh_within_interval);
+    ESP_LOGI("powerpal_ble", "Timestamp: %d, Pulses: %d, Average Watts within interval: %f W", unix_time, pulses_within_interval,
+             avg_watts_within_interval);
 
     if (this->power_sensor_ != nullptr) {
-      this->power_sensor_->publish_state(total_kwh_within_interval);
+      this->power_sensor_->publish_state(avg_watts_within_interval);
     }
 
     if (this->energy_sensor_ != nullptr) {

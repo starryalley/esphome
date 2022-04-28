@@ -74,6 +74,7 @@ class Powerpal : public esphome::ble_client::BLEClientNode, public Component {
   uint8_t pairing_code_[4];
   uint8_t reading_batch_size_[4] = {0x01, 0x00, 0x00, 0x00};
   float pulses_per_kwh_;
+  float pulse_multiplier_;
   uint64_t total_pulses_{0};
 
   uint16_t pairing_code_char_handle_ = 0x2e;
