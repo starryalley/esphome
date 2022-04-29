@@ -18,7 +18,7 @@ void Powerpal::dump_config() {
 
 void Powerpal::setup() {
   this->authenticated_ = false;
-  this->pulse_multiplier_ = ((60.0 * this->reading_batch_size_[0]) / (this->pulses_per_kwh / 1000));
+  this->pulse_multiplier_ = ((60.0 * this->reading_batch_size_[0]) / (this->pulses_per_kwh_ / 1000.0));
 }
 
 std::string Powerpal::pkt_to_hex_(const uint8_t *data, uint16_t len) {
