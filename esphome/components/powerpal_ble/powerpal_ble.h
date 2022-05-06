@@ -38,6 +38,9 @@ static const espbt::ESPBTUUID POWERPAL_BATTERY_CHARACTERISTIC_UUID = espbt::ESPB
 // measurementAccess: '59DA0002-12F4-25A6-7D4F-55961DCE4205',
 // readingBatchSize: '59DA0013-12F4-25A6-7D4F-55961DCE4205',
 
+static const uint8_t seconds_in_minute = 60;    // seconds
+static const float kw_to_w_conversion = 1000.0;    // conversion ratio
+
 class Powerpal : public esphome::ble_client::BLEClientNode, public Component {
   // class Powerpal : public esphome::ble_client::BLEClientNode, public PollingComponent {
  public:

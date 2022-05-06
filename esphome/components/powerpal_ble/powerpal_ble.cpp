@@ -18,7 +18,8 @@ void Powerpal::dump_config() {
 
 void Powerpal::setup() {
   this->authenticated_ = false;
-  this->pulse_multiplier_ = ((60.0 * this->reading_batch_size_[0]) / (this->pulses_per_kwh_ / 1000.0));
+  this->pulse_multiplier_ = ((seconds_in_minute * this->reading_batch_size_[0]) / (this->pulses_per_kwh_ / kw_to_w_conversion));
+  ESP_LOGD(TAG, "pulse_multiplier_: %f", this->pulse_multiplier_ );
 }
 
 std::string Powerpal::pkt_to_hex_(const uint8_t *data, uint16_t len) {
@@ -31,18 +32,18 @@ std::string Powerpal::pkt_to_hex_(const uint8_t *data, uint16_t len) {
 }
 
 void Powerpal::decode_(const uint8_t *data, uint16_t length) {
-  ESP_LOGD("powerpal_ble", "DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
+  ESP_LOGD(TAG, "DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
 }
 
 void Powerpal::parse_battery_(const uint8_t *data, uint16_t length) {
-  ESP_LOGD("powerpal_ble", "Battery: DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
+  ESP_LOGD(TAG, "Battery: DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
   if (length == 1) {
     this->battery_->publish_state(data[0]);
   }
 }
 
 void Powerpal::parse_measurement_(const uint8_t *data, uint16_t length) {
-  ESP_LOGD("powerpal_ble", "Meaurement: DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
+  ESP_LOGD(TAG, "Meaurement: DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
   if (length >= 6) {
     uint32_t unix_time = data[0];
     unix_time += (data[1] << 8);
@@ -55,7 +56,7 @@ void Powerpal::parse_measurement_(const uint8_t *data, uint16_t length) {
     // float total_kwh_within_interval = pulses_within_interval / this->pulses_per_kwh_;
     float avg_watts_within_interval = pulses_within_interval * this->pulse_multiplier_;
 
-    ESP_LOGI("powerpal_ble", "Timestamp: %d, Pulses: %d, Average Watts within interval: %f W", unix_time, pulses_within_interval,
+    ESP_LOGI(TAG, "Timestamp: %d, Pulses: %d, Average Watts within interval: %f W", unix_time, pulses_within_interval,
              avg_watts_within_interval);
 
     if (this->power_sensor_ != nullptr) {
