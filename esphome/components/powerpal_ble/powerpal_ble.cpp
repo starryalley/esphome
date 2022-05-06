@@ -110,7 +110,7 @@ void Powerpal::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
       break;
     }
     case ESP_GATTC_READ_CHAR_EVT: {
-      ESP_LOGE(TAG, "[%s] ESP_GATTC_READ_CHAR_EVT (Received READ)", this->parent_->address_str().c_str());
+      ESP_LOGD(TAG, "[%s] ESP_GATTC_READ_CHAR_EVT (Received READ)", this->parent_->address_str().c_str());
       if (param->read.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "Error reading char at handle %d, status=%d", param->read.handle, param->read.status);
         break;
@@ -169,7 +169,7 @@ void Powerpal::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
     }
 
     case ESP_GATTC_WRITE_CHAR_EVT: {
-      ESP_LOGE(TAG, "[%s] ESP_GATTC_WRITE_CHAR_EVT (Write confirmed)", this->parent_->address_str().c_str());
+      ESP_LOGD(TAG, "[%s] ESP_GATTC_WRITE_CHAR_EVT (Write confirmed)", this->parent_->address_str().c_str());
       if (param->write.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "Error writing value to char at handle %d, status=%d", param->write.handle, param->write.status);
         break;
@@ -224,13 +224,13 @@ void Powerpal::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
         break;
       }
 
-      ESP_LOGE(TAG, "[%s] Seemed to miss any handle matches, what is the handel?: %d",
+      ESP_LOGW(TAG, "[%s] Missed all handle matches: %d",
                this->parent_->address_str().c_str(), param->write.handle);
       break;
     }  // ESP_GATTC_WRITE_CHAR_EVT
 
     case ESP_GATTC_NOTIFY_EVT: {
-      ESP_LOGE(TAG, "[%s] Received Notification", this->parent_->address_str().c_str());
+      ESP_LOGD(TAG, "[%s] Received Notification", this->parent_->address_str().c_str());
 
       // battery
       if (param->notify.handle == this->battery_char_handle_) {
