@@ -1,6 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import sensor, ble_client
+from esphome.components import sensor, ble_client, http_request
 from esphome.const import (
     CONF_ID,
     CONF_BATTERY_LEVEL,
@@ -25,45 +25,95 @@ Powerpal = powerpal_ble_ns.class_("Powerpal", ble_client.BLEClientNode, cg.Compo
 CONF_PAIRING_CODE = "pairing_code"
 CONF_NOTIFICATION_INTERVAL = "notification_interval"
 CONF_PULSES_PER_KWH = "pulses_per_kwh"
+CONF_HTTP_REQUEST_ID = "http_request_id"
+CONF_COST_PER_KWH = "cost_per_kwh"
+CONF_POWERPAL_DEVICE_ID = "powerpal_device_id"
+CONF_POWERPAL_APIKEY = "powerpal_apikey"
+
+def _validate(config):
+    if CONF_HTTP_REQUEST_ID in config and CONF_COST_PER_KWH not in config:
+        raise cv.Invalid(f"If using the Powerpal cloud uploader, you must also set '{CONF_COST_PER_KWH}'")
+    return config
+
+def powerpal_deviceid(value):
+    value = cv.string_strict(value)
+    if len(value) != 8:
+        raise cv.Invalid(f"{CONF_POWERPAL_DEVICE_ID} must be 8 digits")
+    try:
+        int(value, 16)
+    except ValueError:
+        raise cv.Invalid(f"{CONF_POWERPAL_DEVICE_ID} must only be a string of hexadecimal values")
+    return value
+
+def powerpal_apikey(value):
+    value = cv.string_strict(value)
+    parts = value.split("-")
+    if len(parts) != 5:
+        raise cv.Invalid("UUID must consist of 5 - (hyphen) separated parts")
+    parts_int = []
+    if (
+        len(parts[0]) != 8 or
+        len(parts[1]) != 4 or
+        len(parts[2]) != 4 or
+        len(parts[3]) != 4 or
+        len(parts[4]) != 12
+    ):
+        raise cv.Invalid("UUID must be of format XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+    for part in parts:
+        try:
+            parts_int.append(int(part, 16))
+        except ValueError:
+            raise cv.Invalid("UUID parts must be hexadecimal values from 00 to FF")
+
+    return value
 
 CONFIG_SCHEMA = (
-    cv.Schema(
-        {
-            cv.GenerateID(): cv.declare_id(Powerpal),
-            # cv.Required(CONF_POWER): sensor.sensor_schema(
-            #     # unit_of_measurement=UNIT_KILOWATT_HOURS,
-            #     unit_of_measurement=UNIT_KILOWATT,
-            #     accuracy_decimals=5,
-            #     icon=ICON_POWER,
-            #     device_class=DEVICE_CLASS_POWER,
-            #     state_class=STATE_CLASS_MEASUREMENT,
-            # ),
-            cv.Optional(CONF_POWER): sensor.sensor_schema(
-                # unit_of_measurement=UNIT_KILOWATT_HOURS, #used within notification_interval
-                unit_of_measurement=UNIT_WATT,
-                accuracy_decimals=5,
-                device_class=DEVICE_CLASS_POWER,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            cv.Optional(CONF_ENERGY): sensor.sensor_schema(
-                unit_of_measurement=UNIT_KILOWATT_HOURS,
-                accuracy_decimals=5,
-                device_class=DEVICE_CLASS_ENERGY,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
-            ),
-            cv.Required(CONF_PAIRING_CODE): cv.int_range(min=1, max=999999),
-            cv.Required(CONF_NOTIFICATION_INTERVAL): cv.int_range(min=1, max=60),
-            cv.Required(CONF_PULSES_PER_KWH): cv.float_range(min=1),
-            cv.Optional(CONF_BATTERY_LEVEL): sensor.sensor_schema(
-                unit_of_measurement=UNIT_PERCENT,
-                device_class=DEVICE_CLASS_BATTERY,
-                accuracy_decimals=0,
-                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
-            ),
-        }
+    cv.All(
+        cv.Schema(
+            {
+                cv.GenerateID(): cv.declare_id(Powerpal),
+                # cv.Required(CONF_POWER): sensor.sensor_schema(
+                #     # unit_of_measurement=UNIT_KILOWATT_HOURS,
+                #     unit_of_measurement=UNIT_KILOWATT,
+                #     accuracy_decimals=5,
+                #     icon=ICON_POWER,
+                #     device_class=DEVICE_CLASS_POWER,
+                #     state_class=STATE_CLASS_MEASUREMENT,
+                # ),
+                cv.Optional(CONF_POWER): sensor.sensor_schema(
+                    # unit_of_measurement=UNIT_KILOWATT_HOURS, #used within notification_interval
+                    unit_of_measurement=UNIT_WATT,
+                    accuracy_decimals=5,
+                    device_class=DEVICE_CLASS_POWER,
+                    state_class=STATE_CLASS_MEASUREMENT,
+                ),
+                cv.Optional(CONF_ENERGY): sensor.sensor_schema(
+                    unit_of_measurement=UNIT_KILOWATT_HOURS,
+                    accuracy_decimals=5,
+                    device_class=DEVICE_CLASS_ENERGY,
+                    state_class=STATE_CLASS_TOTAL_INCREASING,
+                ),
+                cv.Required(CONF_PAIRING_CODE): cv.int_range(min=1, max=999999),
+                cv.Required(CONF_NOTIFICATION_INTERVAL): cv.int_range(min=1, max=60),
+                cv.Required(CONF_PULSES_PER_KWH): cv.float_range(min=1),
+                cv.Optional(CONF_BATTERY_LEVEL): sensor.sensor_schema(
+                    unit_of_measurement=UNIT_PERCENT,
+                    device_class=DEVICE_CLASS_BATTERY,
+                    accuracy_decimals=0,
+                    entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+                ),
+                cv.Optional(CONF_HTTP_REQUEST_ID): cv.use_id(http_request.HttpRequestComponent),
+                cv.Optional(CONF_COST_PER_KWH): cv.float_range(min=0),
+                cv.Optional(CONF_POWERPAL_DEVICE_ID): powerpal_deviceid, # deviceid (optional) # if not configured, will grab from device
+                cv.Optional(CONF_POWERPAL_APIKEY): powerpal_apikey, # apikey (optional) # if not configured, will grab from device
+                # upload interval (optional)
+                # action to enable or disable peak
+            }
+        )
+        .extend(ble_client.BLE_CLIENT_SCHEMA)
+        .extend(cv.COMPONENT_SCHEMA),
+        _validate,
     )
-    .extend(ble_client.BLE_CLIENT_SCHEMA)
-    .extend(cv.COMPONENT_SCHEMA)
 )
 
 
@@ -92,3 +142,16 @@ async def to_code(config):
     if CONF_BATTERY_LEVEL in config:
         sens = await sensor.new_sensor(config[CONF_BATTERY_LEVEL])
         cg.add(var.set_battery(sens))
+
+    if CONF_HTTP_REQUEST_ID in config:
+        http_request_component = await cg.get_variable(config[CONF_HTTP_REQUEST_ID])
+        cg.add(var.set_http_request(http_request_component))
+
+    if CONF_COST_PER_KWH in config:
+        cg.add(var.set_energy_cost(config[CONF_COST_PER_KWH]))
+
+    if CONF_POWERPAL_DEVICE_ID in config:
+        cg.add(var.set_device_id(config[CONF_POWERPAL_DEVICE_ID]))
+
+    if CONF_POWERPAL_APIKEY in config:
+        cg.add(var.set_apikey(config[CONF_POWERPAL_APIKEY]))
