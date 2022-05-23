@@ -32,10 +32,14 @@ CONF_POWERPAL_DEVICE_ID = "powerpal_device_id"
 CONF_POWERPAL_APIKEY = "powerpal_apikey"
 CONF_DAILY_ENERGY = "daily_energy"
 
+
 def _validate(config):
     if CONF_HTTP_REQUEST_ID in config and CONF_COST_PER_KWH not in config:
-        raise cv.Invalid(f"If using the Powerpal cloud uploader, you must also set '{CONF_COST_PER_KWH}'")
+        raise cv.Invalid(
+            f"If using the Powerpal cloud uploader, you must also set '{CONF_COST_PER_KWH}'"
+        )
     return config
+
 
 def powerpal_deviceid(value):
     value = cv.string_strict(value)
@@ -44,8 +48,11 @@ def powerpal_deviceid(value):
     try:
         int(value, 16)
     except ValueError:
-        raise cv.Invalid(f"{CONF_POWERPAL_DEVICE_ID} must only be a string of hexadecimal values")
+        raise cv.Invalid(
+            f"{CONF_POWERPAL_DEVICE_ID} must only be a string of hexadecimal values"
+        )
     return value
+
 
 def powerpal_apikey(value):
     value = cv.string_strict(value)
@@ -54,11 +61,11 @@ def powerpal_apikey(value):
         raise cv.Invalid("UUID must consist of 5 - (hyphen) separated parts")
     parts_int = []
     if (
-        len(parts[0]) != 8 or
-        len(parts[1]) != 4 or
-        len(parts[2]) != 4 or
-        len(parts[3]) != 4 or
-        len(parts[4]) != 12
+        len(parts[0]) != 8
+        or len(parts[1]) != 4
+        or len(parts[2]) != 4
+        or len(parts[3]) != 4
+        or len(parts[4]) != 12
     ):
         raise cv.Invalid("UUID must be of format XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
     for part in parts:
@@ -69,51 +76,56 @@ def powerpal_apikey(value):
 
     return value
 
-CONFIG_SCHEMA = (
-    cv.All(
-        cv.Schema(
-            {
-                cv.GenerateID(): cv.declare_id(Powerpal),
-                cv.Optional(CONF_TIME_ID): cv.use_id(time.RealTimeClock),
-                cv.Optional(CONF_POWER): sensor.sensor_schema(
-                    unit_of_measurement=UNIT_WATT,
-                    accuracy_decimals=5,
-                    device_class=DEVICE_CLASS_POWER,
-                    state_class=STATE_CLASS_MEASUREMENT,
-                ),
-                cv.Optional(CONF_DAILY_ENERGY): sensor.sensor_schema(
-                    unit_of_measurement=UNIT_KILOWATT_HOURS,
-                    accuracy_decimals=5,
-                    device_class=DEVICE_CLASS_ENERGY,
-                    state_class=STATE_CLASS_TOTAL_INCREASING,
-                ),
-                cv.Optional(CONF_ENERGY): sensor.sensor_schema(
-                    unit_of_measurement=UNIT_KILOWATT_HOURS,
-                    accuracy_decimals=5,
-                    device_class=DEVICE_CLASS_ENERGY,
-                    state_class=STATE_CLASS_TOTAL_INCREASING,
-                ),
-                cv.Required(CONF_PAIRING_CODE): cv.int_range(min=1, max=999999),
-                cv.Required(CONF_NOTIFICATION_INTERVAL): cv.int_range(min=1, max=60),
-                cv.Required(CONF_PULSES_PER_KWH): cv.float_range(min=1),
-                cv.Optional(CONF_BATTERY_LEVEL): sensor.sensor_schema(
-                    unit_of_measurement=UNIT_PERCENT,
-                    device_class=DEVICE_CLASS_BATTERY,
-                    accuracy_decimals=0,
-                    entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
-                ),
-                cv.Optional(CONF_HTTP_REQUEST_ID): cv.use_id(http_request.HttpRequestComponent),
-                cv.Optional(CONF_COST_PER_KWH): cv.float_range(min=0),
-                cv.Optional(CONF_POWERPAL_DEVICE_ID): powerpal_deviceid, # deviceid (optional) # if not configured, will grab from device
-                cv.Optional(CONF_POWERPAL_APIKEY): powerpal_apikey, # apikey (optional) # if not configured, will grab from device
-                # upload interval (optional)
-                # action to enable or disable peak
-            }
-        )
-        .extend(ble_client.BLE_CLIENT_SCHEMA)
-        .extend(cv.COMPONENT_SCHEMA),
-        _validate,
+
+CONFIG_SCHEMA = cv.All(
+    cv.Schema(
+        {
+            cv.GenerateID(): cv.declare_id(Powerpal),
+            cv.Optional(CONF_TIME_ID): cv.use_id(time.RealTimeClock),
+            cv.Optional(CONF_POWER): sensor.sensor_schema(
+                unit_of_measurement=UNIT_WATT,
+                accuracy_decimals=5,
+                device_class=DEVICE_CLASS_POWER,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            cv.Optional(CONF_DAILY_ENERGY): sensor.sensor_schema(
+                unit_of_measurement=UNIT_KILOWATT_HOURS,
+                accuracy_decimals=5,
+                device_class=DEVICE_CLASS_ENERGY,
+                state_class=STATE_CLASS_TOTAL_INCREASING,
+            ),
+            cv.Optional(CONF_ENERGY): sensor.sensor_schema(
+                unit_of_measurement=UNIT_KILOWATT_HOURS,
+                accuracy_decimals=5,
+                device_class=DEVICE_CLASS_ENERGY,
+                state_class=STATE_CLASS_TOTAL_INCREASING,
+            ),
+            cv.Required(CONF_PAIRING_CODE): cv.int_range(min=1, max=999999),
+            cv.Required(CONF_NOTIFICATION_INTERVAL): cv.int_range(min=1, max=60),
+            cv.Required(CONF_PULSES_PER_KWH): cv.float_range(min=1),
+            cv.Optional(CONF_BATTERY_LEVEL): sensor.sensor_schema(
+                unit_of_measurement=UNIT_PERCENT,
+                device_class=DEVICE_CLASS_BATTERY,
+                accuracy_decimals=0,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+            ),
+            cv.Optional(CONF_HTTP_REQUEST_ID): cv.use_id(
+                http_request.HttpRequestComponent
+            ),
+            cv.Optional(CONF_COST_PER_KWH): cv.float_range(min=0),
+            cv.Optional(
+                CONF_POWERPAL_DEVICE_ID
+            ): powerpal_deviceid,  # deviceid (optional) # if not configured, will grab from device
+            cv.Optional(
+                CONF_POWERPAL_APIKEY
+            ): powerpal_apikey,  # apikey (optional) # if not configured, will grab from device
+            # upload interval (optional)
+            # action to enable or disable peak
+        }
     )
+    .extend(ble_client.BLE_CLIENT_SCHEMA)
+    .extend(cv.COMPONENT_SCHEMA),
+    _validate,
 )
 
 
