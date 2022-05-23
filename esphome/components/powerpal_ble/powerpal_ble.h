@@ -4,8 +4,16 @@
 #include "esphome/components/ble_client/ble_client.h"
 #include "esphome/components/esp32_ble_tracker/esp32_ble_tracker.h"
 #include "esphome/components/sensor/sensor.h"
+#ifdef USE_HTTP_REQUEST
 #include "esphome/components/http_request/http_request.h"
 #include <ArduinoJson.h>
+#endif
+
+#ifdef USE_TIME
+#include "esphome/components/time/real_time_clock.h"
+#else
+#include <ctime>
+#endif
 
 #ifdef USE_ESP32
 
@@ -18,7 +26,7 @@ namespace espbt = esphome::esp32_ble_tracker;
 
 struct PowerpalMeasurement {
   uint16_t pulses;
-  uint32_t timestamp;
+  time_t timestamp;
   uint32_t watt_hours;
   float cost;
   // bool is_peak;
@@ -71,7 +79,13 @@ class Powerpal : public esphome::ble_client::BLEClientNode, public Component {
   void set_battery(sensor::Sensor *battery) { battery_ = battery; }
   void set_power_sensor(sensor::Sensor *power_sensor) { power_sensor_ = power_sensor; }
   void set_energy_sensor(sensor::Sensor *energy_sensor) { energy_sensor_ = energy_sensor; }
+  void set_daily_energy_sensor(sensor::Sensor *daily_energy_sensor) { daily_energy_sensor_ = daily_energy_sensor; }
+#ifdef USE_HTTP_REQUEST
   void set_http_request(http_request::HttpRequestComponent *cloud_uploader) { cloud_uploader_ = cloud_uploader; }
+#endif
+#ifdef USE_TIME
+  void set_time(time::RealTimeClock *time) { time_ = time; }
+#endif
   void set_pulses_per_kwh(float pulses_per_kwh) { pulses_per_kwh_ = pulses_per_kwh; }
   void set_pairing_code(uint32_t pairing_code) {
     pairing_code_[0] = (pairing_code & 0x000000FF);
@@ -91,20 +105,30 @@ class Powerpal : public esphome::ble_client::BLEClientNode, public Component {
   void parse_measurement_(const uint8_t *data, uint16_t length);
   std::string uuid_to_device_id_(const uint8_t *data, uint16_t length);
   std::string serial_to_apikey_(const uint8_t *data, uint16_t length);
+#ifdef USE_HTTP_REQUEST
   void store_measurement_(uint16_t measurement, uint32_t timestamp, uint32_t watt_hours, float cost);
   void upload_data_to_cloud_();
+#endif
 
   bool authenticated_;
 
   sensor::Sensor *battery_{nullptr};
   sensor::Sensor *power_sensor_{nullptr};
   sensor::Sensor *energy_sensor_{nullptr};
+  sensor::Sensor *daily_energy_sensor_{nullptr};
+#ifdef USE_HTTP_REQUEST
   http_request::HttpRequestComponent *cloud_uploader_{nullptr};
+#endif
+#ifdef USE_TIME
+  time::RealTimeClock *time_;
+#endif
+  uint16_t day_of_last_measurement_{0};
 
   uint8_t pairing_code_[4];
   uint8_t reading_batch_size_[4] = {0x01, 0x00, 0x00, 0x00};
   float pulses_per_kwh_;
   float pulse_multiplier_;
+  uint64_t daily_pulses_{0};
   uint64_t total_pulses_{0};
 
   uint8_t stored_measurements_count_{0};
