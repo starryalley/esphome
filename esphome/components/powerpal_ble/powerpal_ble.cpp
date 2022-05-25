@@ -13,7 +13,11 @@ void Powerpal::dump_config() {
   ESP_LOGCONFIG(TAG, "POWERPAL");
   LOG_SENSOR(" ", "Battery", this->battery_);
   LOG_SENSOR(" ", "Power", this->power_sensor_);
-  LOG_SENSOR(" ", "Energy", this->energy_sensor_);
+  LOG_SENSOR(" ", "Daily Energy", this->daily_energy_sensor_);
+  LOG_SENSOR(" ", "Total Energy", this->energy_sensor_);
+  if (this->daily_energy_sensor_ != nullptr && !(bool)this->time_) {
+    ESP_LOGW(TAG, "Warning: Using daily_energy without a time_id means relying on your Powerpal's RTC for packet times, which is not recommended. Please consider adding a time component to your ESPHome yaml, and it's time_id to your powerpal_ble component.");
+  }
 }
 
 void Powerpal::setup() {
@@ -21,28 +25,10 @@ void Powerpal::setup() {
   this->pulse_multiplier_ = ((seconds_in_minute * this->reading_batch_size_[0]) / (this->pulses_per_kwh_ / kw_to_w_conversion));
   ESP_LOGD(TAG, "pulse_multiplier_: %f", this->pulse_multiplier_ );
 
-  // if (this->cloud_uploader_ != nullptr) {
 #ifdef USE_HTTP_REQUEST
     this->stored_measurements_.resize(15); //TODO dynamic
-    // http_request::Header acceptheader;
-    // acceptheader.name = "Accept";
-    // acceptheader.value = "application/json";
-    // http_request::Header contentheader;
-    // contentheader.name = "Content-Type";
-    // contentheader.value = "application/json";
-    // http_request::Header authheader;
-    // authheader.name = "Authorization";
-    // authheader.value = this->powerpal_apikey_.c_str();
-    // std::list<http_request::Header> headers;
-    // headers.push_back(acceptheader);
-    // headers.push_back(contentheader);
-    // headers.push_back(authheader);
-    // this->cloud_uploader_->set_headers(headers);
-    // this->powerpal_api_root_.append(this->powerpal_device_id_);
-    // this->cloud_uploader_->set_url(this->powerpal_api_root_);
     this->cloud_uploader_->set_method("POST");
 #endif
-  // }
 }
 
 // void Powerpal::loop() {
@@ -122,22 +108,27 @@ void Powerpal::parse_measurement_(const uint8_t *data, uint16_t length) {
       // if esphome device has a valid time component set up, use that (preferred)
       // else, use the powerpal measurement timestamps
 #ifdef USE_TIME
-      time::ESPTime date_of_measurement = this->time_->now();
+      auto *time_ = *this->time_;
+      time::ESPTime date_of_measurement = time_->now();
       if (date_of_measurement.is_valid()) {
         if (this->day_of_last_measurement_ == 0) { this->day_of_last_measurement_ = date_of_measurement.day_of_year;}
         else if (this->day_of_last_measurement_ != date_of_measurement.day_of_year) {
           this->daily_pulses_ = 0;
           this->day_of_last_measurement_ = date_of_measurement.day_of_year;
         }
-      }
+      } else {
+        // if !date_of_measurement.is_valid(), user may have a bare "time:" in their yaml without a specific platform selected, so fallback to date of powerpal measurement
 #else
-      // avoid using ESPTime here so we don't need a time component in the config
-      struct tm *date_of_measurement = ::localtime(&unix_time);
-      // date_of_measurement.tm_yday + 1 because we are matching ESPTime day of year (1-366 instead of 0-365), which lets us catch a day_of_last_measurement_ of 0 as uninitialised
-      if (this->day_of_last_measurement_ == 0) { this->day_of_last_measurement_ = date_of_measurement->tm_yday + 1 ;}
-      else if (this->day_of_last_measurement_ != date_of_measurement->tm_yday + 1) {
-        this->daily_pulses_ = 0;
-        this->day_of_last_measurement_ = date_of_measurement->tm_yday + 1;
+        // avoid using ESPTime here so we don't need a time component in the config
+        struct tm *date_of_measurement = ::localtime(&unix_time);
+        // date_of_measurement.tm_yday + 1 because we are matching ESPTime day of year (1-366 instead of 0-365), which lets us catch a day_of_last_measurement_ of 0 as uninitialised
+        if (this->day_of_last_measurement_ == 0) { this->day_of_last_measurement_ = date_of_measurement->tm_yday + 1 ;}
+        else if (this->day_of_last_measurement_ != date_of_measurement->tm_yday + 1) {
+          this->daily_pulses_ = 0;
+          this->day_of_last_measurement_ = date_of_measurement->tm_yday + 1;
+        }
+#endif
+#ifdef USE_TIME
       }
 #endif
     }

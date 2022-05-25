@@ -132,7 +132,6 @@ CONFIG_SCHEMA = cv.All(
 
 
 async def to_code(config):
-    cg.add_define("USE_HTTP_REQUEST")
     var = cg.new_Pvariable(config[CONF_ID])
     cg.add(var.set_timeout(config[CONF_TIMEOUT]))
     cg.add(var.set_useragent(config[CONF_USERAGENT]))

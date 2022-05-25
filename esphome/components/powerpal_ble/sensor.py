@@ -19,6 +19,7 @@ from esphome.const import (
 )
 
 CODEOWNERS = ["@WeekendWarrior1"]
+DEPENDENCIES = ["ble_client"]
 
 powerpal_ble_ns = cg.esphome_ns.namespace("powerpal_ble")
 Powerpal = powerpal_ble_ns.class_("Powerpal", ble_client.BLEClientNode, cg.Component)
@@ -156,6 +157,7 @@ async def to_code(config):
         cg.add(var.set_battery(sens))
 
     if CONF_HTTP_REQUEST_ID in config:
+        cg.add_define("USE_HTTP_REQUEST")
         http_request_component = await cg.get_variable(config[CONF_HTTP_REQUEST_ID])
         cg.add(var.set_http_request(http_request_component))
 

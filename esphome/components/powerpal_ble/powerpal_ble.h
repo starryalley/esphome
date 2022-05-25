@@ -4,6 +4,7 @@
 #include "esphome/components/ble_client/ble_client.h"
 #include "esphome/components/esp32_ble_tracker/esp32_ble_tracker.h"
 #include "esphome/components/sensor/sensor.h"
+#include "esphome/core/defines.h"
 #ifdef USE_HTTP_REQUEST
 #include "esphome/components/http_request/http_request.h"
 #include <ArduinoJson.h>
@@ -106,7 +107,7 @@ class Powerpal : public esphome::ble_client::BLEClientNode, public Component {
   std::string uuid_to_device_id_(const uint8_t *data, uint16_t length);
   std::string serial_to_apikey_(const uint8_t *data, uint16_t length);
 #ifdef USE_HTTP_REQUEST
-  void store_measurement_(uint16_t measurement, uint32_t timestamp, uint32_t watt_hours, float cost);
+  void store_measurement_(uint16_t measurement, time_t timestamp, uint32_t watt_hours, float cost);
   void upload_data_to_cloud_();
 #endif
 
@@ -120,7 +121,7 @@ class Powerpal : public esphome::ble_client::BLEClientNode, public Component {
   http_request::HttpRequestComponent *cloud_uploader_{nullptr};
 #endif
 #ifdef USE_TIME
-  time::RealTimeClock *time_;
+  optional<time::RealTimeClock *> time_{};
 #endif
   uint16_t day_of_last_measurement_{0};
 
