@@ -15,9 +15,9 @@ void Powerpal::dump_config() {
   LOG_SENSOR(" ", "Power", this->power_sensor_);
   LOG_SENSOR(" ", "Daily Energy", this->daily_energy_sensor_);
   LOG_SENSOR(" ", "Total Energy", this->energy_sensor_);
-  if (this->daily_energy_sensor_ != nullptr && !(bool)this->time_) {
-    ESP_LOGW(TAG, "Warning: Using daily_energy without a time_id means relying on your Powerpal's RTC for packet times, which is not recommended. Please consider adding a time component to your ESPHome yaml, and it's time_id to your powerpal_ble component.");
-  }
+  // if (this->daily_energy_sensor_ != nullptr && !(bool)this->time_) {
+  //   ESP_LOGW(TAG, "Warning: Using daily_energy without a time_id means relying on your Powerpal's RTC for packet times, which is not recommended. Please consider adding a time component to your ESPHome yaml, and it's time_id to your powerpal_ble component.");
+  // }
 }
 
 void Powerpal::setup() {
