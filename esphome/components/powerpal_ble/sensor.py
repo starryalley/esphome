@@ -1,3 +1,4 @@
+import logging
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import sensor, ble_client, time, http_request
@@ -18,6 +19,8 @@ from esphome.const import (
     CONF_TIME_ID,
 )
 
+_LOGGER = logging.getLogger(__name__)
+
 CODEOWNERS = ["@WeekendWarrior1"]
 DEPENDENCIES = ["ble_client"]
 
@@ -35,6 +38,11 @@ CONF_DAILY_ENERGY = "daily_energy"
 
 
 def _validate(config):
+    if CONF_DAILY_ENERGY in config and CONF_TIME_ID not in config:
+        _LOGGER.warning(
+            "Using daily_energy without a time_id means relying on your Powerpal's RTC for packet times, which is not recommended. "
+            "Please consider adding a time component to your ESPHome yaml, and it's time_id to your powerpal_ble component."
+        )
     if CONF_HTTP_REQUEST_ID in config and CONF_COST_PER_KWH not in config:
         raise cv.Invalid(
             f"If using the Powerpal cloud uploader, you must also set '{CONF_COST_PER_KWH}'"
