@@ -151,6 +151,10 @@ async def to_code(config):
         sens = await sensor.new_sensor(config[CONF_ENERGY])
         cg.add(var.set_energy_sensor(sens))
 
+    if CONF_DAILY_ENERGY in config:
+        sens = await sensor.new_sensor(config[CONF_DAILY_ENERGY])
+        cg.add(var.set_daily_energy_sensor(sens))
+
     if CONF_PAIRING_CODE in config:
         cg.add(var.set_pairing_code(config[CONF_PAIRING_CODE]))
 
