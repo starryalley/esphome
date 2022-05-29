@@ -317,8 +317,8 @@ void Powerpal::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
         break;
       }
 
-      // uuid
-      if (param->read.handle == this->uuid_char_handle_) {
+      // serialNumber
+      if (param->read.handle == this->serial_number_char_handle_) {
         ESP_LOGI(TAG, "Recieved uuid read event");
         this->powerpal_device_id_ = this->uuid_to_device_id_(param->read.value, param->read.value_len);
         ESP_LOGI(TAG, "Powerpal device id: %s", this->powerpal_device_id_.c_str());
@@ -329,8 +329,8 @@ void Powerpal::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
         break;
       }
 
-      // serialNumber
-      if (param->read.handle == this->serial_number_char_handle_) {
+      // uuid
+      if (param->read.handle == this->uuid_char_handle_) {
         ESP_LOGI(TAG, "Recieved serial_number read event");
         this->powerpal_apikey_ = this->serial_to_apikey_(param->read.value, param->read.value_len);
         ESP_LOGI(TAG, "Powerpal apikey: %s", this->powerpal_apikey_.c_str());
@@ -373,20 +373,20 @@ void Powerpal::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
           ESP_LOGW(TAG, "Error sending read request for reading batch size, status=%d", read_reading_batch_size_status);
         }
 
-        if (!this->powerpal_device_id_.length()) {
-          // read uuid (device id)
+        if (!this->powerpal_apikey_.length()) {
+          // read uuid (apikey)
           auto read_uuid_status = esp_ble_gattc_read_char(this->parent()->gattc_if, this->parent()->conn_id,
                                                             this->uuid_char_handle_, ESP_GATT_AUTH_REQ_NONE);
           if (read_uuid_status) {
             ESP_LOGW(TAG, "Error sending read request for powerpal uuid, status=%d", read_uuid_status);
           }
         }
-        if (!this->powerpal_apikey_.length()) {
-          // read serial number (apikey)
+        if (!this->powerpal_device_id_.length()) {
+          // read serial number (device id)
           auto read_serial_number_status = esp_ble_gattc_read_char(this->parent()->gattc_if, this->parent()->conn_id,
                                                             this->serial_number_char_handle_, ESP_GATT_AUTH_REQ_NONE);
           if (read_serial_number_status) {
-            ESP_LOGW(TAG, "Error sending read request for powerpal uuid, status=%d", read_serial_number_status);
+            ESP_LOGW(TAG, "Error sending read request for powerpal serial number, status=%d", read_serial_number_status);
           }
         }
 
